@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "lit-tools",
   "displayName": "Literature corpus tools",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Build, grow and interrogate a full-text literature corpus on any subject. OCR-robust claim search that answers who already said it, who said less, who said more, who contradicts it — with verbatim quotes and line numbers; plus citation-graph corpus expansion behind a human review gate. Subject-specific knowledge lives in the corpus, never in the plugin.",
   "author": {
     "name": "Fosco Loregian",
