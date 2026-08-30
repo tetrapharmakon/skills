@@ -1,0 +1,39 @@
+# Vocabulary gate for ranking harvested candidates.  --> <corpus>/index/topic-terms.txt
+#
+# Format: WEIGHT<TAB>TERM   (matched case-insensitively against title+abstract,
+# after the same punctuation-stripping normalisation used everywhere else, so
+# "(M,R)-system" and "MR systems" are one term).
+#
+# Weights encode DISCRIMINATION, not importance. A term that half the field uses
+# is worth ~nothing however central it is; a term essentially only this
+# literature says is worth a lot. Ask of each term: "if a paper contains this
+# word and nothing else, is it about my subject?" That is the weight.
+#
+#   5   the field's signature phrases -- near-unique to this literature
+#   3   strong topical terms, shared with one adjacent field
+#   1   weak signals, useful only in combination
+#  -3   ANTI-TERMS: they demote the large adjacent literatures that share
+#       surface vocabulary. These matter as much as the positive ones. A corpus
+#       on categorical semantics drowns in machine-learning papers that say
+#       "category"; an anti-term on the intruding field is what clears them.
+#
+# This file only breaks ties and filters the single-edge tail. Ranking is by
+# citation degree first, deliberately -- see the lit-expand skill. A corpus with
+# no terms file ranks by degree alone, which is the safe default, so start small
+# and add terms when the queue shows you what noise looks like.
+#
+# Keep in sync with <corpus>/index/glossary.md: every dialect the glossary
+# records for one idea should appear here, since a paper using only the other
+# tradition's words is exactly the one that lexical search misses.
+
+# ---- signature phrases (weight 5) --------------------------------------------
+# 5	<phrase only this literature uses>
+
+# ---- strong topical (weight 3-4) ---------------------------------------------
+# 4	<term shared with one neighbouring field>
+
+# ---- weak signals (weight 1-2) -----------------------------------------------
+# 1	<generic term of the wider area>
+
+# ---- anti-terms (negative) ---------------------------------------------------
+# -3	<term of the adjacent field that keeps flooding the queue>

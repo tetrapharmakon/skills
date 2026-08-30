@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "lit-tools",
+  "owner": {
+    "name": "Fosco Loregian",
+    "email": "fosco.loregian@gmail.com"
+  },
+  "description": "Tools for building, growing and interrogating full-text literature corpora.",
+  "plugins": [
+    {
+      "name": "lit-tools",
+      "source": "./plugins/lit-tools",
+      "description": "Corpus init, citation-graph expansion, and OCR-robust claim search over any subject's literature"
+    }
+  ]
+}
