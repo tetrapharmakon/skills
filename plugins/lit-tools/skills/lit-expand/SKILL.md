@@ -134,7 +134,12 @@ invisible.
 
 ### 4. Review gate — this is the point of the design
 
-`rank.py` stops. **Do not ingest without the user marking the queue.** Corpus curation
+`rank.py` stops. **Do not ingest without the user marking the queue.**
+
+When the queue is long, hand the reading to a batch of cheap subagents
+(`model: "haiku"`) — one per block of candidates, each returning a one-line verdict and
+what the candidate connects to — rather than pulling every abstract into this session's
+context. Presenting the queue is orchestration; reading it is grunt work. Corpus curation
 is theirs; a bad screening call silently becomes a corpus entry that later gets cited
 in published work. Present the A/B tiers, say what each candidate connects to and why
 it scored, and let them mark:

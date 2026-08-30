@@ -97,11 +97,20 @@ shows are topically adjacent but whose dialect differs enough that no query of y
 would reach them. That is where uncited priority hides, and lexical search
 structurally cannot find it.
 
-**3. Fan out.** One reader per candidate source (typically 4–8, in a single parallel
-batch). Give each: the claim, the decomposition from step 1, its one file, and the
+**3. Fan out — and never read the texts yourself.** One subagent per candidate source
+(typically 4–8, in a single parallel batch), each spawned with an explicitly **cheap
+model** (`model: "haiku"`). The binding constraint on this work is not capability, it is
+the context window and the token budget: a single deep read of an OCR'd paper can cost
+more context than the whole answer it feeds, and a filled window degrades the session
+exactly when the synthesis matters. The orchestrator reads only the routing assets and
+the `find.py` hit lists.
+
+Give each subagent: the claim, the decomposition from step 1, its **one** file, and the
 output contract below. Each runs `find.py` restricted to its file (`-f`) for anchors,
 then reads the surrounding argument — a lexical hit is a pointer, not evidence — and
-writes or extends that source's `index/<slug>.md` card from what it read.
+returns only quotes with line numbers, verdicts, and one line of rationale each. Each
+also writes or extends that source's `index/<slug>.md` card from what it read, so the
+reading survives the subagent's context.
 
 **4. Verify.** For every reported hit, re-run `find.py` on a distinctive fragment of
 the quoted text to confirm it exists at the stated line. **Drop any hit that fails.**
