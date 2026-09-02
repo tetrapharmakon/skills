@@ -55,11 +55,14 @@ Plain `grep` silently misses OCR'd scans, where a word can come out letter-space
 and those scans are usually the old papers a priority claim depends on. On one real
 test query grep found 2 of 3 files and missed the only relevant one.
 
-`find.py` matches against a whitespace- and punctuation-free mirror, so punctuation
-and spacing in the query are ignored: `(M,R)-system` and `mr system` are the same
-pattern, and a phrase broken across lines still matches. Consequences: short patterns
-match inside longer words, and a pattern spanning more than 3 lines will not match.
-Prefer distinctive phrases of a few words.
+`find.py` matches against a mirror that folds ligatures and accents (`ﬁxed` → `fixed`,
+`Möbius` → `mobius`) and then drops all whitespace and punctuation, so typography,
+punctuation and spacing in the query are ignored: `(M,R)-system` and `mr system` are
+the same pattern, and a phrase broken across lines still matches. Consequences: short
+patterns match inside longer words, and a pattern spanning more than 3 lines will not
+match. Prefer distinctive phrases of a few words. The mirror is stamped with the
+normaliser version; if `find.py` warns that it is stale, run `normalize.py` before
+trusting any result.
 
 ## Phase 1 — routing assets
 

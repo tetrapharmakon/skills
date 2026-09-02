@@ -61,8 +61,6 @@ WORK_FIELDS = (
     "best_oa_location,abstract_inverted_index"
 )
 
-_NONALNUM = re.compile(r"[^a-z0-9]+")
-
 
 def searchable(title, minlen=1):
     """OpenAlex's title.search filter treats commas as filter separators and
@@ -141,9 +139,10 @@ def crossref_meta(doi):
 
 
 def norm_title(s):
-    """Aggressive normalisation for dedup: matches normalize.py's approach so
-    an OCR'd corpus title and a clean OpenAlex title collapse to one string."""
-    return _NONALNUM.sub("", (s or "").lower())
+    """Aggressive normalisation for dedup: the same folding normalize.py
+    applies to the texts, so an OCR'd corpus title, a ligatured PDF title and
+    a clean OpenAlex title collapse to one string."""
+    return litcorpus.norm(s)
 
 
 def ref_id(rec):

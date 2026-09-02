@@ -28,10 +28,51 @@ cited from the wrong body of literature.
 """
 import json
 import os
+import re
+import unicodedata
 from pathlib import Path
 
 CONFIG_NAME = "lit-corpus.json"
 SCHEMA_VERSION = 1
+
+# Bump when norm() changes. normalize.py stamps the mirror with it, and find.py
+# warns when the mirror it is about to search was built by an older normaliser.
+NORM_VERSION = "2"
+_NONALNUM = re.compile(r"[^a-z0-9]+")
+
+
+def norm(s, substitutions=()):
+    """The one text normalisation every lit-* tool matches on.
+
+    Fold compatibility characters first -- typographic ligatures (ﬁ ﬂ ﬀ ﬃ),
+    superscripts and fullwidth forms decompose under NFKD, and accents split
+    into base letter plus combining mark so the mark can be dropped -- then
+    lowercase and keep only ASCII letters and digits. Stripping everything
+    non-alphanumeric is what makes matching immune to letter-spaced and
+    word-joined OCR; folding first is what stops a born-digital PDF's `ﬁxed`
+    from becoming `xed`, which cost one corpus nine in ten hits for "fixed
+    point" in its main monograph.
+
+    `substitutions` are per-corpus (raw, replacement) pairs applied before
+    folding, for OCR that replaced a glyph outright: one scanned journal
+    prints every fi ligature as `®`. They belong to the mirror side only --
+    normalize.py applies them, queries do not need them.
+    """
+    s = s or ""
+    for raw, rep in substitutions:
+        s = s.replace(raw, rep)
+    return _NONALNUM.sub("", unicodedata.normalize("NFKD", s).lower())
+
+
+def mirror_stale(texts_norm):
+    """None if the mirror was built by this normaliser, else a one-line reason.
+    A mirror without a stamp predates the stamp and is treated as v1."""
+    marker = Path(texts_norm) / ".version"
+    have = marker.read_text(encoding="utf-8").strip() if marker.is_file() else "1"
+    if have != NORM_VERSION:
+        return (f"{texts_norm} was built by normaliser v{have}; this is v{NORM_VERSION}. "
+                f"Re-run normalize.py or folded characters will not match.")
+    return None
 
 DEFAULT_LAYOUT = {
     "texts": "texts",
