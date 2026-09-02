@@ -335,24 +335,39 @@ def from_queue(path, c):
     if not path.is_file():
         print(f"no {path} -- run rank.py first", file=sys.stderr)
         return []
-    marks = {}
+    marks, refs = {}, []
     for line in path.read_text(encoding="utf-8").splitlines():
         m = re.match(r"\|\s*`\[([xs ])\]`\s*\|\s*`([^`]+)`\s*\|", line)
-        if m and m.group(1) in ("x", "s"):
-            marks[m.group(2).strip()] = m.group(1)
+        if m:
+            refs.append(m.group(2).strip())
+            if m.group(1) in ("x", "s"):
+                marks[m.group(2).strip()] = m.group(1)
     if not marks:
         print("nothing marked [x] or [s] in the queue", file=sys.stderr)
         return []
-    out = []
+    out, seen = [], set()
     for line in c.candidates.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         r = json.loads(line)
         ref = L.ref_id(r)
         if ref in marks:
+            seen.add(ref)
             if marks[ref] == "s":
                 r["oa_pdf"] = ""              # force a stub
             out.append(r)
+    missing = [m for m in marks if m not in seen]
+    if missing:
+        print(f"  {len(missing)} marked row(s) match no candidate: "
+              f"{', '.join(missing[:6])}", file=sys.stderr)
+        # Refs from before the hashed scheme were the first ten letters of
+        # the title ("elementsof"); current refs always carry digits. Say so,
+        # or this reads as "the queue is empty" against a queue full of marks.
+        if any(re.fullmatch(r"[a-z]+", x) for x in refs):
+            print("  this queue was written by an older rank.py / init_corpus.py "
+                  "(title-prefix refs). Regenerate it -- rank.py for a frontier queue, "
+                  "init_corpus.py for an init queue -- and re-mark with mark.py.",
+                  file=sys.stderr)
     return out
 
 

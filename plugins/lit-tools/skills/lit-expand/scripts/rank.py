@@ -266,6 +266,13 @@ def main():
             r["flags"].insert(0, "wanted")
         recs.append(r)
 
+    if recs and not any(r.get("edges") for r in recs):
+        # Silent otherwise: the queue simply shows "-" in infl and no bg flag,
+        # which reads as "nothing to say" rather than "not asked yet".
+        print("  no citation contexts in this frontier (harvested before they were "
+              "kept); re-run harvest.py to fill the infl and flags columns",
+              file=sys.stderr)
+
     if args.term_stats:
         if not terms:
             print("no topic terms to report on", file=sys.stderr)
