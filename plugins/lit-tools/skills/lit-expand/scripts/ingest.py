@@ -25,6 +25,7 @@ import re
 import subprocess
 import sys
 import unicodedata
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
