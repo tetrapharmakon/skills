@@ -47,8 +47,14 @@ python3 $S/build_manifest.py
 ```bash
 python3 $S/find.py "closure to efficient causation"
 python3 $S/find.py -C3 "noncomputable" "non computable"      # OR over patterns
-python3 $S/find.py -l -f Arbib "entailment"                  # counts only
+python3 $S/find.py -l -f Arbib "entailment"                  # per-file counts + hits/kL
 ```
+
+Two things make raw counts lie and `find.py` corrects both: lines that repeat through
+a file (running heads, journal banners) are not anchors unless you pass
+`--keep-repeats`, and `-l` prints hits per thousand lines next to the count and sorts
+by it, because a 14,000-line book outscores an 800-line paper on any common word.
+Compare sources by that density, never by the raw count.
 
 Plain `grep` silently misses OCR'd scans, where a word can come out letter-spaced
 (`a u t o m a t a`) or run together, and notation is mangled beyond recognition —
