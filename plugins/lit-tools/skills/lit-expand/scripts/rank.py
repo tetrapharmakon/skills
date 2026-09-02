@@ -17,6 +17,7 @@ alone, which is the safe default.
 """
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -140,6 +141,57 @@ def seed_authors(c):
             for r in L.read_tsv(c.bibmap)}
 
 
+_HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
+_WANTED_HEADING = re.compile(r"not in (the )?corpus|wanted|missing", re.I)
+_TITLE_SPAN = re.compile(r"\*([^*\n]{20,}?)\*|_([^_\n]{20,}?)_|[\"“]([^\"”\n]{20,}?)[\"”]")
+
+
+def wanted_titles(c):
+    """Titles named under a 'Not in corpus' (or 'Wanted' / 'Missing') heading
+    of any findings file, as normalised strings. A claim search that ends by
+    naming the paper it could not check is the strongest possible signal that
+    the corpus should hold that paper; this is how the search feeds the
+    expansion. Titles are read from emphasised or quoted spans of twenty
+    characters or more, so a reference written as `Author, *Title*, Venue
+    (Year)` is picked up and prose is not."""
+    out = {}
+    if not c.findings.is_dir():
+        return out
+    for f in sorted(c.findings.glob("*.md")):
+        level, inside = 0, False
+        for line in f.read_text(encoding="utf-8", errors="replace").split("\n"):
+            m = _HEADING.match(line)
+            if m:
+                if inside and len(m.group(1)) <= level:
+                    inside = False
+                if _WANTED_HEADING.search(m.group(2)):
+                    inside, level = True, len(m.group(1))
+                continue
+            if inside:
+                for g in _TITLE_SPAN.finditer(line):
+                    t = next(x for x in g.groups() if x)
+                    out.setdefault(L.norm_title(t), (t.strip(), f.name))
+    return out
+
+
+def wanted_by(rec, wanted):
+    """The findings file that asked for this candidate, or None."""
+    n = L.norm_title(rec.get("title", ""))
+    if len(n) < 20:
+        return None
+    for wn, (_, fname) in wanted.items():
+        # 0.9, not the 0.8 used for provider records: titles in one field share
+        # long phrases ("... of sequential dynamical systems"), and at 0.8 a
+        # findings file asking for one paper lifted a different one. A wanted
+        # title may also be the head of a longer candidate title (a subtitle
+        # added), never a fragment inside it.
+        if wn == n or L.title_ratio(n, wn) >= 0.9:
+            return fname
+        if len(wn) >= 30 and n.startswith(wn) and len(wn) >= 0.7 * len(n):
+            return fname
+    return None
+
+
 def flags(rec, seeds_auth):
     """Short evidence tags for the reviewer -- not verdicts. On the corpus this
     was calibrated on no structural rule separated noise from signal: the same
@@ -193,6 +245,9 @@ def main():
         done.add(L.norm_title(r["slug"].replace("_", " ")))
     terms = load_terms(c.terms)
     seeds_auth = seed_authors(c)
+    wanted = wanted_titles(c)
+    if wanted:
+        print(f"{len(wanted)} title(s) named as missing by findings files", file=sys.stderr)
     recs = []
     for line in src.read_text(encoding="utf-8").splitlines():
         if not line.strip():
@@ -204,6 +259,11 @@ def main():
         r["score"], r["degree"], r["topic"], r["hits"] = score(r, terms)
         r["classified"], r["influential"], r["substantive"] = edge_summary(r)
         r["flags"], r["self"] = flags(r, seeds_auth)
+        r["wanted"] = wanted_by(r, wanted)
+        if r["wanted"]:
+            # Two degrees' worth: a search asked for this paper by name.
+            r["score"] += 8
+            r["flags"].insert(0, "wanted")
         recs.append(r)
 
     if args.term_stats:
@@ -217,6 +277,8 @@ def main():
     keep = [r for r in recs if r["score"] >= args.min_score][:args.limit]
 
     def tier(r):
+        if r.get("wanted"):
+            return "A"          # named as missing by a claim search
         if r["degree"] >= 3 or (r["degree"] >= 2 and r["topic"] >= 4):
             return "A"
         if r["degree"] >= 2 or r["topic"] >= 8:
@@ -236,7 +298,8 @@ def main():
         "seeds share an author with the candidate (a group's own later work in another "
         "field scores high on degree); `bg` = every classified edge is background, none "
         "influential (it names the seeds, it may not build on them); `noabs` = no abstract, "
-        "so the vocabulary score is silence, not a judgement. The Detail section quotes the "
+        "so the vocabulary score is silence, not a judgement; `wanted` = a findings file "
+        "named this title under *Not in corpus* (+8, tier A). The Detail section quotes the "
         "sentences in which the citations are made.",
         "",
         "Mark each row, then run `ingest.py`:",
@@ -272,6 +335,8 @@ def main():
             + (f", {r['self']} of {r['degree']} seeds share an author" if r["self"] else "")
             + (f"; flags: {' '.join(r['flags'])}" if r["flags"] else "") + ")",
         ]
+        if r.get("wanted"):
+            out.append(f"- **wanted by** `findings/{r['wanted']}` (named under *Not in corpus*)")
         if r["seeds_back"]:
             out.append(f"- **cited by seeds**: {', '.join(s[:44] for s in r['seeds_back'][:6])}")
         if r["seeds_fwd"]:
