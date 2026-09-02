@@ -29,6 +29,9 @@ import litcorpus  # noqa: E402
 API = "https://api.openalex.org"
 CORPUS = None  # bound by use(); the single source of every path
 CACHE = None   # <corpus>/index/.cache, set by ensure_cache()
+REFRESH = False  # set by --refresh: ignore cached responses, still re-cache them.
+                 # The cache never expires on its own, so a frontier harvested a
+                 # year ago is missing a year of citers until someone says so.
 
 
 def use(c):
@@ -265,7 +268,7 @@ def get(path, params, tries=3, cache=True):
     url = _url(path, params)
     key = hashlib.sha1(url.encode()).hexdigest()
     cf = ensure_cache() / f"{key}.json"
-    if cache and cf.is_file():
+    if cache and not REFRESH and cf.is_file():
         try:
             return json.loads(cf.read_text(encoding="utf-8"))
         except Exception:
@@ -381,7 +384,7 @@ def s2_get(path, params, tries=5, cache=True):
     url = f"{S2}/{path}?{urllib.parse.urlencode(params)}"
     key = hashlib.sha1(("s2:" + url).encode()).hexdigest()
     cf = ensure_cache() / f"{key}.json"
-    if cache and cf.is_file():
+    if cache and not REFRESH and cf.is_file():
         try:
             return json.loads(cf.read_text(encoding="utf-8"))
         except Exception:

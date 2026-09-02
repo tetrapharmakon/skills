@@ -46,7 +46,9 @@ corpus than OpenAlex ids do (on the first corpus built this way, 38 of 47 seeds 
 DOI but only 13 an OpenAlex id), and S2 keeps working when the OpenAlex budget is gone.
 
 - Every response from both providers is cached under `<corpus>/index/.cache/`.
-  Re-runs and resumes are free; deleting the cache is what costs you.
+  Re-runs and resumes are free; deleting the cache is what costs you. The cache never
+  expires by itself, so a frontier harvested a year ago is missing a year of citers:
+  `harvest.py --refresh` (and `resolve_seeds.py --refresh`) fetch again and re-cache.
 - `_lib.get()` raises `RateLimited` on 429. **Never catch it and record an absence.**
   A rate limit is not a missing paper. Every stage stops, keeps what it has, exits 2.
 - `OPENALEX_MAILTO=<address>` opts into the faster polite pool. Not set by default —
