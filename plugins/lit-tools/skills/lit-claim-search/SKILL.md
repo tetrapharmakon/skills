@@ -48,7 +48,12 @@ python3 $S/build_manifest.py
 python3 $S/find.py "closure to efficient causation"
 python3 $S/find.py -C3 "noncomputable" "non computable"      # OR over patterns
 python3 $S/find.py -l -f Arbib "entailment"                  # per-file counts + hits/kL
+python3 $S/find.py --index -C1 "covering map"                # also the routing assets
 ```
+
+`--index` searches `CORPUS-MAP.md`, `glossary.md`, `TRAPS.md` and the cards with the
+same folding as the texts, so routing can be a query — probe the map's Dialect fields
+for each phrasing in your decomposition — instead of a read of the whole map.
 
 Two things make raw counts lie and `find.py` corrects both: lines that repeat through
 a file (running heads, journal banners) are not anchors unless you pass

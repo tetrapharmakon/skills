@@ -81,6 +81,9 @@ def main():
     ap.add_argument("--keep-repeats", action="store_true",
                     help="also anchor on lines that repeat through a file "
                          "(running heads); suppressed by default")
+    ap.add_argument("--index", action="store_true",
+                    help="also search the routing assets in index/*.md (corpus map, "
+                         "glossary, traps, cards), normalised on the fly")
     a = ap.parse_args()
     try:
         c = litcorpus.from_args(a)
@@ -97,12 +100,27 @@ def main():
     if not all(pats):
         sys.exit("a pattern normalized to empty")
 
-    total, suppressed, listing = 0, 0, []
+    # (label, normalised lines, loader for the original lines). Texts come from
+    # the mirror; with --index the routing assets are folded on the fly, so
+    # that routing can be a query over the map, glossary and cards instead
+    # of a read of all of them.
+    sources = []
     for nf in sorted(NORM.glob("*.txt")):
         if a.f and not any(s.lower() in nf.name.lower() for s in a.f):
             continue
-        orig = SRC / nf.name
-        nlines = nf.read_text(encoding="utf-8").split("\n")
+        sources.append((nf.name, nf.read_text(encoding="utf-8").split("\n"),
+                        lambda p=SRC / nf.name: p.read_text(encoding="utf-8",
+                                                            errors="replace").split("\n")))
+    if a.index and c.index.is_dir():
+        for mf in sorted(c.index.glob("*.md")):
+            if a.f and not any(s.lower() in mf.name.lower() for s in a.f):
+                continue
+            olines = mf.read_text(encoding="utf-8", errors="replace").split("\n")
+            sources.append((f"index/{mf.name}", [norm(l) for l in olines],
+                            lambda o=olines: o))
+
+    total, suppressed, listing = 0, 0, []
+    for name, nlines, load in sources:
         found = hits(nlines, pats)
         if not a.keep_repeats:
             skip = furniture(nlines)
@@ -113,10 +131,10 @@ def main():
             continue
         total += len(found)
         if a.l:
-            listing.append((1000.0 * len(found) / max(len(nlines), 1), len(found), nf.name))
+            listing.append((1000.0 * len(found) / max(len(nlines), 1), len(found), name))
             continue
-        olines = orig.read_text(encoding="utf-8", errors="replace").split("\n")
-        print(f"\n=== {nf.name}  ({len(found)} hit{'s'[:len(found) ^ 1]}) ===")
+        olines = load()
+        print(f"\n=== {name}  ({len(found)} hit{'s'[:len(found) ^ 1]}) ===")
         for i in sorted(found):
             lo, hi = max(0, i - a.C), min(len(olines), i + a.C + 1)
             print(f"--- L{i + 1}  [{', '.join(sorted(found[i]))}]")
