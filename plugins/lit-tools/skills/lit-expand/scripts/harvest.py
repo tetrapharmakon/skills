@@ -85,23 +85,28 @@ def main():
 
     kn_titles, kn_dois = known(c)
     cands, stopped = {}, False   # dedup key -> record + edge sets
+    by_title = {}                # normalised title -> dedup key, for the
+                                 # two-DOIs-one-paper collapse below
 
     def note(rec, slug, direction):
         r = L.s2_norm(rec) if args.provider == "s2" else rec
-        key = r["doi"] or L.norm_title(r["title"])
+        tkey = L.norm_title(r["title"])
+        key = r["doi"] or tkey
         if not key:
             return
-        if L.norm_title(r["title"]) in kn_titles or (r["doi"] and r["doi"] in kn_dois):
+        if tkey in kn_titles or (r["doi"] and r["doi"] in kn_dois):
             return
         # Same paper can carry two DOIs (Baianu 1973 has both a Springer and an
-        # Elsevier one), so collapse on normalised title as well.
-        tkey = L.norm_title(r["title"])
-        for existing in cands.values():
-            if tkey and L.norm_title(existing["title"]) == tkey:
-                existing[direction].append(slug)
-                return
-        c = cands.setdefault(key, {**r, "seeds_back": [], "seeds_fwd": []})
-        c[direction].append(slug)
+        # Elsevier one), so collapse on normalised title as well. Indexed rather
+        # than scanned: a full frontier is ~1000 works reached by ~20k edges,
+        # and a linear scan per edge made this stage quadratic.
+        if tkey and tkey in by_title:
+            cands[by_title[tkey]][direction].append(slug)
+            return
+        entry = cands.setdefault(key, {**r, "seeds_back": [], "seeds_fwd": []})
+        if tkey:
+            by_title.setdefault(tkey, key)
+        entry[direction].append(slug)
 
     try:
         for r in usable:
