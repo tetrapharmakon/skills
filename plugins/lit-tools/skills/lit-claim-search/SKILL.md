@@ -127,14 +127,25 @@ returns only quotes with line numbers, verdicts, and one line of rationale each.
 also writes or extends that source's `index/<slug>.md` card from what it read, so the
 reading survives the subagent's context.
 
-**4. Verify.** For every reported hit, re-run `find.py` on a distinctive fragment of
-the quoted text to confirm it exists at the stated line. **Drop any hit that fails.**
-Output here becomes citations in published work; an invented quote is the one
-unrecoverable failure mode.
-
-**5. Record.** Write `<corpus>/findings/<claim-slug>.md` — the claim, the
+**4. Record.** Write `<corpus>/findings/<claim-slug>.md` — the claim, the
 decomposition, the hit table, the sources searched with nothing found, and the
-sources not searched.
+sources not searched. Keep the hit table in the shape of the output contract below,
+with the location cell as `slug:Lstart-Lend`; that is what the next step reads.
+
+**5. Verify — mechanically, not by assertion.** Output here becomes citations in
+published work; an invented quote is the one unrecoverable failure mode, and a
+model's own claim to have re-checked its quotes is not a check.
+
+```bash
+python3 $S/verify.py findings/<claim-slug>.md
+```
+
+Every quote in every table row with a location is split into fragments and matched,
+after the same normalisation the mirror uses, inside the stated line range. A fragment
+found elsewhere in the file is a wrong line number: fix the range. A fragment found
+nowhere is not verbatim: **re-quote it from `texts/` or drop the row.** The exit code
+is non-zero while any row fails; do not report a search whose findings file does not
+pass.
 
 ## Output contract
 
