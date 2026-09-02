@@ -110,9 +110,10 @@ cannot be counted.
 
 Each edge also keeps what Semantic Scholar knows about the citation itself: the
 sentence it is made in, its intent (background, methodology, result) and the
-influential flag. They cost nothing extra, the queue's Detail section shows them so a
-reviewer sees *how* a candidate cites a seed without opening it, and `rank.py` uses
-them for tiering. Older records have none; absence of a context is not a weak edge.
+influential flag. They cost nothing extra, and the queue shows them — as the `infl`
+and `flags` columns and as quoted citing sentences in the Detail section — so a
+reviewer sees *how* a candidate cites a seed without opening it. Older records have
+none; absence of a context is not a weak edge.
 
 ### 3. rank.py — and why degree, not keywords
 
@@ -123,6 +124,23 @@ relevant source 1. Degree cannot be gamed by a common word, and it still surface
 OCR-mangled paper with no abstract at all — the exact case keyword search structurally
 cannot reach. `<corpus>/index/topic-terms.txt` only breaks ties and filters the
 single-edge tail; a corpus with no terms file ranks by degree alone, which is safe.
+
+The terms file asks of every term "if a paper contains this and nothing else, is it
+about my subject?" — and the only way to answer is to see what it actually fires on:
+
+```bash
+python3 $S/rank.py --term-stats      # fires · share of frontier · weight · term
+```
+
+A positive term that fires on a third of the frontier is generic vocabulary wearing a
+topical weight; a term that never fires is dead weight (54 of 90 on one corpus); and a
+term contained in another — a singular and its plural — always fires with it and the
+two weights add, since matching is by substring. The vocabulary route into tier A is
+only as good as these weights: on that corpus two off-topic network-science papers
+reached tier A on the field's own signature phrase, `graph dynamical system(s)`,
+listed twice at weight 5 and so worth 10, and used by an adjacent literature. Run this
+after every harvest and fix the weights before reading the queue; it is the
+calibration loop the template promises.
 
 Tiers: **A** = degree ≥ 3, or degree ≥ 2 with strong vocabulary. **B** = degree ≥ 2.
 **C** = one edge, kept on vocabulary alone; treat C as a reading list, not a queue.
