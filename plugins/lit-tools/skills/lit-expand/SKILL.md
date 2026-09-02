@@ -166,6 +166,20 @@ it scored, and let them mark:
 
 `[x]` ingest full text · `[s]` stub, metadata only · `[ ]` skip
 
+Mark by ref id rather than by editing the file — the queue runs to thousands of lines,
+and reading it back into context to issue a text edit per row costs more than the
+decision does:
+
+```bash
+python3 $S/mark.py find hecke kiselman        # rows whose title has the words, with refs
+python3 $S/mark.py x f3f5474aa5 7e4e0946cb    # ingest full text
+python3 $S/mark.py s 0d0bf69491               # stub
+python3 $S/mark.py list                       # what is marked
+```
+
+A ref may be shortened to a unique prefix of four or more characters; anything that
+matches nothing is reported, never guessed.
+
 ### 5. ingest.py
 
 Fetches the PDF, extracts with `pdftotext`, writes `texts/<slug>.txt` in the corpus
