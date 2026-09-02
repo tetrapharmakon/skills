@@ -17,7 +17,6 @@ alone, which is the safe default.
 """
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -25,8 +24,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "lib"))
 import _lib as L
 import litcorpus
-
-_NONALNUM = re.compile(r"[^a-z0-9]+")
 
 
 def load_terms(path):
@@ -40,7 +37,7 @@ def load_terms(path):
         if not line.strip() or line.lstrip().startswith("#") or "\t" not in line:
             continue
         w, t = line.split("\t", 1)
-        out.append((int(w), _NONALNUM.sub("", t.lower()), t.strip()))
+        out.append((int(w), litcorpus.norm(t), t.strip()))
     return out
 
 
@@ -50,7 +47,7 @@ ref_id = L.ref_id   # one definition, shared with ingest.py and init_corpus.py
 def score(rec, terms):
     """(total, degree, topic, matched-terms). Degree dominates by construction."""
     degree = len(set(rec["seeds_back"]) | set(rec["seeds_fwd"]))
-    blob = _NONALNUM.sub("", (rec["title"] + " " + rec.get("abstract", "")).lower())
+    blob = litcorpus.norm(rec["title"] + " " + (rec.get("abstract") or ""))
     topic, hits = 0, []
     for w, norm, label in terms:
         if norm and norm in blob:

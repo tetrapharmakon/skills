@@ -18,7 +18,6 @@ patterns match inside longer words, and a phrase spanning more than WINDOW
 lines will not match -- prefer distinctive multi-word phrases.
 """
 import argparse
-import re
 import sys
 from pathlib import Path
 
@@ -27,7 +26,7 @@ import litcorpus
 
 WINDOW = 3  # lines joined per probe, so phrases spanning a line break still hit
 
-norm = lambda s: re.sub(r"[^a-z0-9]+", "", s.lower())
+norm = litcorpus.norm   # the same folding the mirror was built with
 
 
 def hits(nlines, pats):
@@ -64,6 +63,9 @@ def main():
     SRC, NORM = c.texts, c.texts_norm
     if not NORM.is_dir():
         sys.exit(f"run normalize.py first (no {NORM})")
+    stale = litcorpus.mirror_stale(NORM)
+    if stale:
+        print(f"WARNING: {stale}", file=sys.stderr)
     pats = [norm(p) for p in a.patterns]
     if not all(pats):
         sys.exit("a pattern normalized to empty")
