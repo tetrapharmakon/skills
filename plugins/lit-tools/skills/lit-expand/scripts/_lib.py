@@ -363,6 +363,12 @@ def oa_pdf(work):
 S2 = "https://api.semanticscholar.org/graph/v1"
 S2_FIELDS = ("title,year,externalIds,abstract,venue,authors,"
              "citationCount,openAccessPdf,publicationTypes")
+# Edge-level fields on /citations and /references: the sentence(s) in which
+# the citation is made, S2's classification of why (background, methodology,
+# result), and its influential-citation flag. Free in the same request, and
+# they answer the triage question a title cannot: does this paper build on the
+# seed, or name it in a list?
+S2_EDGE_FIELDS = "contexts,intents,isInfluential"
 
 
 def s2_get(path, params, tries=5, cache=True):
@@ -411,17 +417,27 @@ def s2_get(path, params, tries=5, cache=True):
 
 def s2_edges(doi, direction, cap=500, pause=1.1):
     """direction: "citations" (who cites it) or "references" (what it cites).
-    Returns the neighbouring paper records, flattened."""
+    Returns the neighbouring paper records, flattened, each carrying the edge
+    itself under "_edge": {"contexts": [...], "intents": [...],
+    "influential": bool}. Older S2 records and papers S2 has no full text for
+    return empty lists there -- absence of a context is not a weak edge."""
     inner = "citingPaper" if direction == "citations" else "citedPaper"
     out, offset = [], 0
     while len(out) < cap:
         d = s2_get(f"paper/DOI:{doi}/{direction}",
-                   {"fields": S2_FIELDS, "limit": 100, "offset": offset})
+                   {"fields": S2_FIELDS + "," + S2_EDGE_FIELDS,
+                    "limit": 100, "offset": offset})
         if not d or not d.get("data"):
             break
         for row in d["data"]:
             rec = row.get(inner)
             if rec:
+                rec = dict(rec)
+                rec["_edge"] = {
+                    "contexts": [c for c in (row.get("contexts") or []) if c][:3],
+                    "intents": [i for i in (row.get("intents") or []) if i],
+                    "influential": bool(row.get("isInfluential")),
+                }
                 out.append(rec)
         if d.get("next") is None:
             break
@@ -446,4 +462,5 @@ def s2_norm(rec):
         "cited_by": rec.get("citationCount") or 0,
         "oa_pdf": (rec.get("openAccessPdf") or {}).get("url") or "",
         "abstract": (rec.get("abstract") or "")[:2000],
+        "_edge": rec.get("_edge") or {},
     }

@@ -88,8 +88,24 @@ def main():
     by_title = {}                # normalised title -> dedup key, for the
                                  # two-DOIs-one-paper collapse below
 
+    def add_edge(entry, slug, direction, edge):
+        """seeds_back/seeds_fwd stay as before; `edges` additionally keeps what
+        S2 knows about each citation: the sentence it is made in, its intent
+        (background / methodology / result) and the influential flag. rank.py
+        uses them to tell a paper that builds on a seed from one that names
+        five seeds in a single background sentence."""
+        entry[direction].append(slug)
+        entry.setdefault("edges", []).append({
+            "seed": slug,
+            "dir": "back" if direction == "seeds_back" else "fwd",
+            "influential": bool(edge.get("influential")),
+            "intents": list(edge.get("intents") or []),
+            "contexts": [" ".join(x.split())[:300] for x in (edge.get("contexts") or [])[:2]],
+        })
+
     def note(rec, slug, direction):
-        r = L.s2_norm(rec) if args.provider == "s2" else rec
+        r = L.s2_norm(rec) if args.provider == "s2" else dict(rec)
+        edge = r.pop("_edge", None) or {}
         tkey = L.norm_title(r["title"])
         key = r["doi"] or tkey
         if not key:
@@ -101,12 +117,12 @@ def main():
         # than scanned: a full frontier is ~1000 works reached by ~20k edges,
         # and a linear scan per edge made this stage quadratic.
         if tkey and tkey in by_title:
-            cands[by_title[tkey]][direction].append(slug)
+            add_edge(cands[by_title[tkey]], slug, direction, edge)
             return
-        entry = cands.setdefault(key, {**r, "seeds_back": [], "seeds_fwd": []})
+        entry = cands.setdefault(key, {**r, "seeds_back": [], "seeds_fwd": [], "edges": []})
         if tkey:
             by_title.setdefault(tkey, key)
-        entry[direction].append(slug)
+        add_edge(entry, slug, direction, edge)
 
     try:
         for r in usable:

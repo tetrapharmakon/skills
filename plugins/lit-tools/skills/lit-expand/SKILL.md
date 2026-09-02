@@ -108,6 +108,12 @@ unstructured text with no DOIs, so ancestors are only recoverable for modern see
 Treat a low-degree old paper as under-measured, not as unimportant — its edges mostly
 cannot be counted.
 
+Each edge also keeps what Semantic Scholar knows about the citation itself: the
+sentence it is made in, its intent (background, methodology, result) and the
+influential flag. They cost nothing extra, the queue's Detail section shows them so a
+reviewer sees *how* a candidate cites a seed without opening it, and `rank.py` uses
+them for tiering. Older records have none; absence of a context is not a weak edge.
+
 ### 3. rank.py — and why degree, not keywords
 
 Score is `4 × (distinct seeds connected) + vocabulary weight`. Degree dominates by
@@ -120,6 +126,20 @@ single-edge tail; a corpus with no terms file ranks by degree alone, which is sa
 
 Tiers: **A** = degree ≥ 3, or degree ≥ 2 with strong vocabulary. **B** = degree ≥ 2.
 **C** = one edge, kept on vocabulary alone; treat C as a reading list, not a queue.
+
+Degree can be gamed after all — by a survey, or a group's later paper in another
+field, that names five seeds in one background sentence. One queue held a
+mathematical-epidemiology prospectus at degree 5 in tier A while the paper that
+originated a seed's central definition sat at degree 1. No structural rule separated
+the two cleanly on that corpus: the same group wrote the prospectus *and* the most
+relevant follow-ups, and Semantic Scholar flagged one of the prospectus's citations
+influential. So the queue does not demote; it shows the evidence and leaves the call
+at the gate. Per row: `infl` = influential / classified edges; `flags` = `self` (most
+connected seeds share an author with the candidate), `bg` (every classified edge is
+background, none influential), `noabs` (no abstract, so a vocabulary score of zero is
+silence, not a judgement — old scans and encyclopedia entries). The Detail section
+quotes the sentences in which the citations are made. Read a tier-A row with `self`
+and no vocabulary as a question, not an answer.
 
 The tier split matters at scale. On one full frontier of 1006 works, 343 had an OA
 PDF but 312 of those were tier C — a single citation edge plus a topical word.
