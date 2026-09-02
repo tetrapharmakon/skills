@@ -108,6 +108,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true",
                     help="re-resolve rows that already have an OpenAlex id")
+    ap.add_argument("--refresh", action="store_true",
+                    help="ignore cached provider responses and fetch again")
     litcorpus.add_argument(ap)
     args = ap.parse_args()
 
@@ -116,6 +118,7 @@ def main():
     except litcorpus.NoCorpus as e:
         print(e, file=sys.stderr)
         return 1
+    L.REFRESH = args.refresh
     print(f"{c.describe()}\n")
 
     bib = L.parse_refs_bib()

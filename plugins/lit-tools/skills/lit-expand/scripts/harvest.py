@@ -65,6 +65,10 @@ def main():
     ap.add_argument("--provider", choices=("s2", "openalex"), default="s2")
     ap.add_argument("--max-citers", type=int, default=0,
                     help="cap per edge direction (default: harvest.max_edges)")
+    ap.add_argument("--refresh", action="store_true",
+                    help="ignore cached provider responses and fetch again (the cache "
+                         "never expires by itself; a year-old frontier is missing a "
+                         "year of citers)")
     litcorpus.add_argument(ap)
     args = ap.parse_args()
     try:
@@ -72,6 +76,7 @@ def main():
     except litcorpus.NoCorpus as e:
         print(e, file=sys.stderr)
         return 1
+    L.REFRESH = args.refresh
     cap = args.max_citers or c.max_edges
 
     seeds = L.read_tsv(c.seeds)
