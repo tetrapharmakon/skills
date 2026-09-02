@@ -109,7 +109,11 @@ python3 $LT/skills/lit-claim-search/scripts/find.py --corpus <corpus> "<a phrase
 ```
 
 Check the manifest for `EXTRACTION-FAILED` rows (delete the text, re-register as a
-stub — a corrupt text reads as coverage) and for `ocr-poor` ones. Report the corpus as
+stub — a corrupt text reads as coverage) and for `ocr-poor` ones. Ligatures and accents
+are folded automatically, but a scan that replaced a glyph outright (`®nite` for
+`ﬁnite`) needs a line under `normalize.substitutions` in `lit-corpus.json`
+(`{"®": "fi"}`) and another run of `normalize.py`; a quick `find.py` for a word you
+know the scan mangles tells you whether one is needed. Report the corpus as
 what it is: how many texts, how many stubs, how many failed. Then tell the user the
 next two moves: search a claim with `lit-claim-search`, or grow the corpus along its
 citation frontier with `lit-expand`.
