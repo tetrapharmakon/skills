@@ -44,11 +44,7 @@ def load_terms(path):
     return out
 
 
-def ref_id(rec):
-    """Short stable handle for a candidate, printed in the queue so the
-    round-trip through CANDIDATES.md is exact. Title-prefix matching is not
-    safe: "The Reflection of Life" appears twice, 2013 and 2015."""
-    return (rec.get("id") or L.norm_title(rec.get("title", "")))[:10]
+ref_id = L.ref_id   # one definition, shared with ingest.py and init_corpus.py
 
 
 def score(rec, terms):
