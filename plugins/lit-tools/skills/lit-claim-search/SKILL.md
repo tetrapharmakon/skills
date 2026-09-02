@@ -190,8 +190,11 @@ Close with three explicit sections — they are as valuable as the hits:
 
 - **Searched, nothing found** — per source. This is the evidence for a novelty claim.
 - **Not in corpus** — anything in the bibliography with no `MANIFEST.tsv` row, plus
-  rows marked `EXTRACTION-FAILED` or `no-fulltext`. Never let a null result imply
-  coverage that does not exist.
+  rows marked `EXTRACTION-FAILED` or `no-fulltext`, plus any paper the search learned it
+  needs (a definition's origin cited by a source, a theorem attributed to a work the
+  corpus lacks). Never let a null result imply coverage that does not exist. Write each
+  title in *italics* or quotes: `lit-expand`'s ranking reads this section and lifts a
+  matching candidate to the top of the next queue.
 - **Confidence** — lower it for `ocr-poor` sources: a missed hit there is likelier.
 
 ## Before trusting a filename, read the corpus's TRAPS.md

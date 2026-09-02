@@ -166,6 +166,15 @@ PDF but 312 of those were tier C — a single citation edge plus a topical word.
 Ingesting them would have quintupled the corpus with material one weak link from the
 subject. Fetch A/B in bulk; make C a deliberate, separate decision.
 
+**Searches feed the expansion.** Every findings file that `lit-claim-search` writes
+ends with a *Not in corpus* section naming the papers it could not check. `rank.py`
+reads those sections (emphasised or quoted titles under a heading matching *Not in
+corpus*, *Wanted* or *Missing*), and a candidate whose title matches one gets +8, tier
+A and the flag `wanted`, with the findings file named in its Detail block. A search
+that asks for a paper by name is the strongest signal the frontier can carry; on one
+corpus it would have lifted the paper behind a seed's central definition from 75th to
+the top of the queue.
+
 `rank.py` excludes anything already in `bibmap.tsv`, so the queue always shows only
 untriaged work. `candidates.jsonl` stays the raw frontier and is never pruned — it is
 a record of what the citation graph contained, not a worklist. Note `--limit`
