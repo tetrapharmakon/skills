@@ -40,11 +40,15 @@ def main() -> int:
         print(f"no texts at {c.texts}", file=sys.stderr)
         return 1
     c.texts_norm.mkdir(parents=True, exist_ok=True)
+    # Per-corpus OCR glyph substitutions (lit-corpus.json -> normalize ->
+    # substitutions), e.g. {"®": "fi"} when a scan replaced every fi ligature
+    # with ®. Mirror side only: a query is typed clean and needs none of them.
+    subs = c.substitutions
     n = 0
     for src in sorted(c.texts.glob("*.txt")):
         lines = src.read_text(encoding="utf-8", errors="replace").split("\n")
         (c.texts_norm / src.name).write_text(
-            "\n".join(litcorpus.norm(l) for l in lines), encoding="utf-8")
+            "\n".join(litcorpus.norm(l, subs) for l in lines), encoding="utf-8")
         n += 1
     # A stale mirror silently answers queries about a text that is no longer
     # in the corpus, which reads as a real hit.
@@ -53,7 +57,8 @@ def main() -> int:
         f.unlink()
     (c.texts_norm / ".version").write_text(litcorpus.NORM_VERSION + "\n",
                                            encoding="utf-8")
-    print(f"normalized {n} files -> {c.texts_norm}  (normaliser v{litcorpus.NORM_VERSION})"
+    print(f"normalized {n} files -> {c.texts_norm}  (normaliser v{litcorpus.NORM_VERSION}"
+          + (f", {len(subs)} OCR substitution{'s'[:len(subs) ^ 1]})" if subs else ")")
           + (f"  ({len(stale)} stale removed)" if stale else ""))
     return 0
 

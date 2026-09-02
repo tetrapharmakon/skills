@@ -64,6 +64,12 @@ match. Prefer distinctive phrases of a few words. The mirror is stamped with the
 normaliser version; if `find.py` warns that it is stale, run `normalize.py` before
 trusting any result.
 
+OCR that replaced a glyph outright is handled per corpus: one scan prints every `fi`
+ligature as `®`, another as `ÿ`. List the pairs under `normalize.substitutions` in
+`lit-corpus.json` (`{"®": "fi", "ÿ": "fi"}`) and re-run `normalize.py`. They apply to
+the mirror of every text, so only list characters that never occur legitimately in
+this corpus. Add one the moment a search turns up a word the scan mangled.
+
 ## Phase 1 — routing assets
 
 Two artefacts, deliberately cheap. There is **no up-front full read of the corpus**:

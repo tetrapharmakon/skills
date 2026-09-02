@@ -187,6 +187,14 @@ class Corpus:
         # cross-tradition routing in lit-claim-search keys on.
         self.default_tradition = data.get("default_tradition") or "unclassified"
 
+        # OCR glyph substitutions applied to the search mirror, e.g. {"®": "fi"}
+        # for a scan whose fi ligatures all came out as ®. Per corpus, so only
+        # list characters that never occur legitimately in these texts. A dict
+        # in the file for readability; ordered pairs here.
+        nz = data.get("normalize") or {}
+        self.substitutions = tuple((k, v) for k, v in
+                                   (nz.get("substitutions") or {}).items() if k)
+
         h = data.get("harvest") or {}
         self.hub_traditions = set(h.get("hub_traditions") or [])
         self.hub_cited_by = int(h.get("hub_cited_by") or 400)
@@ -296,6 +304,7 @@ def default_config(name, description="", traditions=None, bib=None, cited_from=N
         "bibliography": {"bib": bib or "index/refs.bib"},
         "traditions": traditions or {},
         "default_tradition": "unclassified",
+        "normalize": {"substitutions": {}},
         "harvest": {"hub_traditions": [], "hub_cited_by": 400, "max_edges": 400},
     }
     if cited_from:
