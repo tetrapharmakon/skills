@@ -1,11 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
-  "name": "lit-tools",
+  "name": "tetrapharmakon",
   "owner": {
     "name": "Fosco Loregian",
     "email": "fosco.loregian@gmail.com"
   },
-  "description": "Tools for building, growing and interrogating full-text literature corpora.",
+  "description": "Catalog of @tetrapharmakon's shared Claude Code plugins.",
   "plugins": [
     {
       "name": "lit-tools",

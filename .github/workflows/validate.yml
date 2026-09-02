@@ -1,0 +1,22 @@
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Claude Code
+        run: |
+          curl -fsSL https://claude.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Validate marketplace (strict)
+        run: claude plugin validate . --strict
+      - name: Validate all plugins + skills (strict)
+        # Each plugin under plugins/* — validates its manifest AND every skill's frontmatter.
+        run: |
+          for p in plugins/*/; do
+            echo "== $p =="
+            claude plugin validate "$p" --strict
+          done

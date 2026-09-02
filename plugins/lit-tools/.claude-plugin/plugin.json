@@ -8,5 +8,13 @@
     "name": "Fosco Loregian",
     "email": "fosco.loregian@gmail.com"
   },
-  "keywords": ["literature", "bibliography", "corpus", "citations", "research", "bibtex"]
+  "repository": "https://github.com/tetrapharmakon/skills",
+  "keywords": [
+    "literature",
+    "bibliography",
+    "corpus",
+    "citations",
+    "research",
+    "bibtex"
+  ]
 }

@@ -1,62 +1,58 @@
-# lit-tools
+# skills
 
-Claude Code skills for building, growing and interrogating a full-text literature
-corpus — on any subject.
+Personal repository of [@tetrapharmakon](https://github.com/tetrapharmakon)'s Claude Code plugins, published as a **plugin marketplace** (`.claude-plugin/marketplace.json`) for native, versioned install.
 
-| skill | what it does |
-|---|---|
-| `lit-corpus-init` | turn a folder of PDFs and/or a `.bib` into a corpus |
-| `lit-expand` | grow it along its citation graph, behind a human review gate |
-| `lit-claim-search` | ask who already said a claim, who said less, more, or the opposite |
+Plugins live under `plugins/<name>/` and are listed in the marketplace manifest. Today it ships one:
 
-## The one design rule
-
-**The tools know nothing about any subject. The corpus knows everything.**
-
-Everything domain-specific lives in the corpus directory, so the same plugin serves a
-corpus on relational biology, one on algebraic topology and one on chemistry at the
-same time:
-
-```
-<corpus>/lit-corpus.json         identity, layout, traditions, bibliography
-<corpus>/texts/                  extracted full text, one file per source
-<corpus>/texts-norm/             OCR-robust search mirror (generated)
-<corpus>/index/bibmap.tsv        curated slug <-> bibkey <-> tradition
-<corpus>/index/MANIFEST.tsv      generated: size, OCR quality, status
-<corpus>/index/CORPUS-MAP.md     routing blocks — what to ask each source
-<corpus>/index/glossary.md       the dialects each tradition uses for one idea
-<corpus>/index/topic-terms.txt   weighted vocabulary for ranking candidates
-<corpus>/index/TRAPS.md          filenames that lie, duplicate deposits, bad scans
-<corpus>/findings/               one file per claim searched
-```
-
-Corpus discovery: `--corpus PATH`, else `$LIT_CORPUS`, else walk up from the working
-directory to a `lit-corpus.json` (or one in an immediate subdirectory). Two candidates
-side by side is an error, never a guess.
+| Plugin | What it does |
+|--------|--------------|
+| [`lit-tools`](./plugins/lit-tools) | Build, grow and interrogate a full-text literature corpus on any subject: `lit-corpus-init`, `lit-expand`, `lit-claim-search`. |
 
 ## Install
 
 ```bash
-claude plugin marketplace add ~/repos/lit-tools
-claude plugin install lit-tools@lit-tools
+claude plugin marketplace add tetrapharmakon/skills
+claude plugin install lit-tools@tetrapharmakon
 ```
 
-or `/plugin` inside Claude Code.
+or `/plugin` inside Claude Code. Update with `claude plugin update lit-tools` — users
+only receive updates when `version` in the plugin's `plugin.json` is bumped.
 
-## Why it works the way it does
+For what `lit-tools` does and how to use it, see [its README](./plugins/lit-tools/README.md).
 
-- **Never `grep` an OCR'd corpus.** Scanned journals come out letter-spaced
-  (`a u t o m a t a`) and word-joined; matching happens against a punctuation- and
-  whitespace-free mirror instead. On one test query `grep` missed the only relevant
-  source.
-- **Rank candidates by citation degree, not keywords.** Lexical scoring over a
-  multi-tradition corpus inverts the truth: one query scored a famous irrelevant text
-  435 and the single relevant paper 1.
-- **A rate limit is not an absence.** Every pipeline stage stops on a 429 and keeps
-  what it has. Recording "not found" instead once demoted 25 correctly resolved seeds.
-- **A paper with no reachable text is a stub, never a silent drop.** Claim search
-  reports stubs as unsearched, so a null result cannot masquerade as novelty.
-- **Ingestion stops at a review gate.** Curation is the user's; a bad screening call
-  becomes a corpus entry that later gets cited.
+## Layout
 
-Requires `python3` and `pdftotext` (poppler-utils). No API keys.
+```
+.claude-plugin/marketplace.json          the catalog; lists every plugin
+plugins/<name>/.claude-plugin/plugin.json  one manifest per plugin, carries `version`
+plugins/<name>/skills/<skill>/SKILL.md     the plugin's skills
+.github/workflows/validate.yml           CI: strict validation of marketplace + plugins
+```
+
+## Adding a plugin
+
+1. Create `plugins/<name>/.claude-plugin/plugin.json` — see [`lit-tools`](./plugins/lit-tools/.claude-plugin/plugin.json) for a template (`name`, `displayName`, `version`, `description`, `author`, `repository`, `keywords`).
+2. Add an entry for it to the `plugins` array in `.claude-plugin/marketplace.json`.
+3. Validate: `claude plugin validate plugins/<name> --strict` and `claude plugin validate . --strict`.
+
+## Adding a skill to a plugin
+
+1. Create `plugins/<name>/skills/<skill>/SKILL.md` (kebab-case folder) with YAML frontmatter:
+   ```markdown
+   ---
+   name: <skill>
+   description: What it does, and the concrete situations that should trigger it.
+   ---
+   ```
+   The folder name and frontmatter `name` must match, and the `description` must make clear **when** the skill fires — it is all Claude sees before loading the body.
+2. Keep `SKILL.md` lean: push detail into sibling files (`references/`, `scripts/`) loaded on demand.
+3. Bump `version` in that plugin's `plugin.json` to release the change to marketplace users.
+4. Validate with `claude plugin validate plugins/<name> --strict`.
+
+## Conventions
+
+- One marketplace, many plugins: each is a folder under `plugins/<name>/` with its own `.claude-plugin/plugin.json`, all listed in `.claude-plugin/marketplace.json`.
+- Skills that ship executable code live **inside** their plugin (`plugins/<name>/skills/`), not at the top level: `lit-tools`' scripts resolve their shared `lib/` relative to the plugin root, and reach it from `SKILL.md` via `${CLAUDE_PLUGIN_ROOT}`.
+- A future plugin holding only prose skills (no executables) may instead keep them at top-level `skills/` so `npx skills add tetrapharmakon/skills` can find them, symlinked into the plugin as `plugins/<name>/skills -> ../../skills`.
+- Distribution and versioning live in the manifests; `claude plugin update` keys off `version`.
+- English for repo docs, manifests, and commit messages.
