@@ -179,6 +179,9 @@ a file whose name matches a famous paper it is not, an extraction that produced 
 bytes. `index/TRAPS.md` is where that knowledge lives, and it is the difference
 between a citation and a retraction. Add to it whenever a search turns one up.
 
-Note also that the `ocr%` column in the manifest overstates damage — it counts
-single-letter tokens, so a mathematical text scores high while reading cleanly.
-Trust it as a warning, not a verdict; keep using `find.py` regardless.
+The manifest carries two extraction-quality columns, both warnings rather than
+verdicts: `dict%` (share of longer tokens that are dictionary words; clean mathematical
+prose sits around 70–78%) and `spaced%` (share of letters inside runs of single-letter
+tokens, the letter-spaced OCR the mirror exists for; clean maths scores 1–4%). A text
+is `ocr-poor` or `ocr-fair` on either. Keep using `find.py` regardless; lower the
+confidence of a null result there.
