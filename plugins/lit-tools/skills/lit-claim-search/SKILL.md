@@ -86,12 +86,20 @@ invisible.
 - `MANIFEST.tsv` and `CORPUS-MAP.md` (built from abstracts and section maps, not full
   text). The map exists to fix *ranking*, which is the actual weakness of lexical
   search: the right source is almost always in the hit list, buried under
-  generic-word noise.
+  generic-word noise. Keep a routing block to routing — what to route here for, its
+  dialect, what it does *not* prove — a paragraph, not a theorem inventory. Every
+  search reads the whole map before it does anything, so a block that is a full summary
+  taxes every future search with its length and duplicates the card; one corpus's map
+  reached 30 KB for seven sources, some 12k tokens per search before a subagent ran.
 - `index/<slug>.md` — a full card per `references/card-template.md`, holding a claim
   inventory and a "does not prove" section. **Written lazily**: whenever a Phase 2
   deep read opens a source, write or extend its card from the reading you just did.
   Never build these speculatively. Over time the sources the work leans on acquire
-  detailed cards and the rest cost nothing.
+  detailed cards and the rest cost nothing. A card records only what was read at a
+  line number the card cites; when a verified quote and a card line disagree, the
+  quote wins and the card is corrected on the spot. One corpus's card for its main
+  monograph stated a morphism's direction backwards in two places out of three,
+  against the verified quote on the same page, and nothing had checked it.
 
 Rows with status `no-fulltext` are metadata-only stubs for papers known to be
 relevant but not obtainable — **always report them as unsearched.**
@@ -121,11 +129,20 @@ exactly when the synthesis matters. The orchestrator reads only the routing asse
 the `find.py` hit lists.
 
 Give each subagent: the claim, the decomposition from step 1, its **one** file, and the
-output contract below. Each runs `find.py` restricted to its file (`-f`) for anchors,
-then reads the surrounding argument — a lexical hit is a pointer, not evidence — and
-returns only quotes with line numbers, verdicts, and one line of rationale each. Each
-also writes or extends that source's `index/<slug>.md` card from what it read, so the
+extraction contract: for every passage that bears on the claim, the verbatim quote
+with `slug:Lstart-Lend`, one or two sentences of the surrounding argument (what is
+assumed, what is proved, for which case), and the source's own words for the ideas in
+the decomposition. Each runs `find.py` restricted to its file (`-f`) for anchors, then
+reads the surrounding argument — a lexical hit is a pointer, not evidence. Each also
+writes or extends that source's `index/<slug>.md` card from what it read, so the
 reading survives the subagent's context.
+
+**Subagents extract; the orchestrator judges.** A verdict — `same`, `weaker`,
+`stronger`, `assumed`, `contradicts` — is a mathematical judgement about hypotheses
+and subsumption, and it needs the whole decomposition and every source's quotes in
+view at once. A cheap model is the right tool for finding and copying passages
+faithfully; it is the wrong tool for deciding whether a theorem subsumes yours. Assign
+the verdicts yourself, from the returned quotes, after step 4 has verified them.
 
 **4. Record.** Write `<corpus>/findings/<claim-slug>.md` — the claim, the
 decomposition, the hit table, the sources searched with nothing found, and the
