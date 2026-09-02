@@ -47,10 +47,50 @@ ref_id = L.ref_id   # one definition, shared with ingest.py and init_corpus.py
 SUBSTANTIVE = {"methodology", "result"}   # S2 intents that mean "builds on it"
 
 
+def blob_of(rec):
+    return litcorpus.norm(rec["title"] + " " + (rec.get("abstract") or ""))
+
+
+def term_stats(recs, terms):
+    """How often each topic term fires across the whole frontier. The terms
+    file asks of every term \"if a paper contains this and nothing else, is it
+    about my subject?\"; the only way to answer is to see what it actually
+    fires on. A positive term that fires on a third of the frontier is
+    generic vocabulary wearing a topical weight, and it is what lets an
+    off-topic paper enter tier A through the vocabulary route."""
+    blobs = [blob_of(r) for r in recs]
+    n = max(len(blobs), 1)
+    # Matching is by substring, so a term contained in another always fires
+    # with it and their weights add: "graph dynamical system" and "graph
+    # dynamical systems" listed separately at 5 each are one term at 10.
+    inside = {}
+    for w, norm, label in terms:
+        for _, norm2, label2 in terms:
+            if norm and norm2 and norm != norm2 and norm in norm2:
+                inside.setdefault(label2, label)
+    rows = []
+    for w, norm, label in terms:
+        fires = sum(1 for b in blobs if norm and norm in b)
+        rows.append((fires, w, label))
+    rows.sort(key=lambda r: (-r[0], -abs(r[1])))
+    print(f"{'fires':>5} {'share':>6} {'w':>3}  term        ({n} frontier records)")
+    for fires, w, label in rows:
+        share = fires / n
+        if label in inside:
+            note = f"  <- contains '{inside[label]}': always fires with it, weights add"
+        elif w > 0 and share > 0.33:
+            note = "  <- fires on a third of the frontier: not discriminating"
+        elif fires == 0:
+            note = "  <- never fires: no effect (or the frontier has no abstracts for it)"
+        else:
+            note = ""
+        print(f"{fires:5d} {share:6.0%} {w:3d}  {label}{note}")
+
+
 def score(rec, terms):
     """(total, degree, topic, matched-terms). Degree dominates by construction."""
     degree = len(set(rec["seeds_back"]) | set(rec["seeds_fwd"]))
-    blob = litcorpus.norm(rec["title"] + " " + (rec.get("abstract") or ""))
+    blob = blob_of(rec)
     topic, hits = 0, []
     for w, norm, label in terms:
         if norm and norm in blob:
@@ -131,6 +171,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--min-score", type=int, default=4)
     ap.add_argument("--limit", type=int, default=120)
+    ap.add_argument("--term-stats", action="store_true",
+                    help="print how often each topic term fires across the frontier "
+                         "and exit without writing the queue")
     litcorpus.add_argument(ap)
     args = ap.parse_args()
     try:
@@ -162,6 +205,13 @@ def main():
         r["classified"], r["influential"], r["substantive"] = edge_summary(r)
         r["flags"], r["self"] = flags(r, seeds_auth)
         recs.append(r)
+
+    if args.term_stats:
+        if not terms:
+            print("no topic terms to report on", file=sys.stderr)
+            return 1
+        term_stats(recs, terms)
+        return 0
 
     recs.sort(key=lambda r: (-r["score"], -r["influential"], -r["degree"], -(r["year"] or 0)))
     keep = [r for r in recs if r["score"] >= args.min_score][:args.limit]
