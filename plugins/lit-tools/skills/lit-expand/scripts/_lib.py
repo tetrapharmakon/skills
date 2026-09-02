@@ -146,6 +146,21 @@ def norm_title(s):
     return _NONALNUM.sub("", (s or "").lower())
 
 
+def ref_id(rec):
+    """Ten-character handle printed in the review queue and read back by
+    ingest.py, so the round trip through CANDIDATES.md is exact.
+
+    Provider ids are unique already, so their prefix is enough. When there is
+    none -- every record from lit-corpus-init, and the odd frontier record --
+    hash the normalised title instead of taking its prefix: "Elements of a
+    theory of simulation II" and "... III" share their first ten characters,
+    and a prefix handle marked one of them and ingested both."""
+    pid = rec.get("id") or ""
+    if pid:
+        return pid[:10]
+    return hashlib.sha1(norm_title(rec.get("title", "")).encode()).hexdigest()[:10]
+
+
 # ---------------------------------------------------------------- bibliography
 
 def parse_refs_bib(path=None):

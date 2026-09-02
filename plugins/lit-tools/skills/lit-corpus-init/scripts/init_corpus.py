@@ -149,7 +149,7 @@ def write_queue(c, recs):
         "|---|---|---|---|---|---|---|",
     ]
     for r in recs:
-        ref = (r.get("id") or L.norm_title(r["title"]))[:10]
+        ref = L.ref_id(r)
         mark = "x" if r.get("local_pdf") else " "
         t = " ".join(r["title"].split()).replace("|", "/")[:70]
         v = (r.get("venue") or "")[:24].replace("|", "/")

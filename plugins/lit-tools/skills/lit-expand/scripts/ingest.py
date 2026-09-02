@@ -347,7 +347,7 @@ def from_queue(path, c):
         if not line.strip():
             continue
         r = json.loads(line)
-        ref = (r.get("id") or L.norm_title(r.get("title", "")))[:10]
+        ref = L.ref_id(r)
         if ref in marks:
             if marks[ref] == "s":
                 r["oa_pdf"] = ""              # force a stub
