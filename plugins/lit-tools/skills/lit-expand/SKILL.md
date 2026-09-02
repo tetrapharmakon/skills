@@ -32,6 +32,14 @@ Every script finds the corpus by walking up from the working directory to a
 tradition vocabulary, the hub rules and the bibliography location come from that
 config — the scripts hold no knowledge of any subject.
 
+On a corpus you did not create in this session, start with
+`python3 $LT/skills/lit-claim-search/scripts/doctor.py --fix`: it reports whether the
+frontier predates citation contexts (re-harvest to fill `infl` and `flags`), whether the
+queue's ref ids predate the current scheme (regenerate and re-mark; it lists the marked
+rows), and repairs the mirror and manifest itself. Two of the scripts also say so on
+their own: `rank.py` notes a frontier without contexts, and `ingest.py --from-queue`
+explains marks that match no candidate.
+
 ## Providers and budget
 
 Two different APIs, deliberately:

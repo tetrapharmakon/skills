@@ -42,6 +42,19 @@ python3 $S/normalize.py
 python3 $S/build_manifest.py
 ```
 
+**On any corpus you did not create in this session, run the doctor first.** The tools
+move on; a corpus built last month does not, and most of the drift is silent — a
+manifest with last year's columns, a frontier harvested before citation contexts were
+kept, a queue whose marks no longer match anything. `doctor.py` compares what is on disk
+with what the current tools write and prints the exact command for each stale item;
+`--fix` applies the two safe local repairs (mirror, manifest) and leaves the two that
+need a decision (re-harvesting takes minutes on the network; regenerating a queue
+discards its marks, which it lists).
+
+```bash
+python3 $S/doctor.py --fix
+```
+
 ## find.py is the only acceptable search tool over a corpus
 
 ```bash

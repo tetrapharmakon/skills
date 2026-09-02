@@ -19,6 +19,10 @@ LT="${CLAUDE_PLUGIN_ROOT}"      # if unset, derive it: this file is at
 I="$LT/skills/lit-corpus-init/scripts/init_corpus.py"
 ```
 
+If a corpus already exists and the question is whether it is up to date with the tools,
+this is not the skill: run `python3 $LT/skills/lit-claim-search/scripts/doctor.py --fix`
+and do what it prints.
+
 ## 1. Build the skeleton and the queue
 
 ```bash
