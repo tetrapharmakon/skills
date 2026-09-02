@@ -49,6 +49,9 @@ _WORD = re.compile(r"[^\W\d_]+")   # runs of letters, any script
 
 WORDLIST_CANDIDATES = ("/usr/share/dict/words", "/usr/dict/words")
 
+# doctor.py compares an existing manifest against this to tell an old build.
+MANIFEST_HEADER = ("slug", "bibkey", "tradition", "kb", "lines", "dict%", "spaced%", "status")
+
 
 def load_wordlist():
     """A plain one-word-per-line list, or None. $LIT_WORDLIST overrides the
@@ -153,7 +156,7 @@ def main():
             print(f"  MISSING TEXT (bibmap says fulltext=yes): {stem}", file=sys.stderr)
 
     rows.sort(key=lambda r: r[0] + ".txt")  # match the old glob order exactly
-    hdr = ("slug", "bibkey", "tradition", "kb", "lines", "dict%", "spaced%", "status")
+    hdr = MANIFEST_HEADER
     c.manifest.parent.mkdir(parents=True, exist_ok=True)
     c.manifest.write_text("\n".join("\t".join(r) for r in [hdr] + rows) + "\n",
                           encoding="utf-8")

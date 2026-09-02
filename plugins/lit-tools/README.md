@@ -35,6 +35,11 @@ Corpus discovery: `--corpus PATH`, else `$LIT_CORPUS`, else walk up from the wor
 directory to a `lit-corpus.json` (or one in an immediate subdirectory). Two candidates
 side by side is an error, never a guess.
 
+Upgrading: a corpus built with an older release keeps working, and
+`skills/lit-claim-search/scripts/doctor.py --fix` reports what is stale in it (search
+mirror, manifest, frontier without citation contexts, queue with old ref ids) with the
+command that fixes each, applying the safe ones itself.
+
 ## Install
 
 ```bash
