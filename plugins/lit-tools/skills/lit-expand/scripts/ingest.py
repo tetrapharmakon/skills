@@ -396,13 +396,13 @@ def main():
         for line in c.candidates.read_text(encoding="utf-8").splitlines():
             if not line.strip():
                 continue
-            c = json.loads(line)
-            sl = slugify(c["title"])
+            cand = json.loads(line)
+            sl = slugify(cand["title"])
             if sl in stubs:
-                c["slug"] = sl
-                c["bibkey"] = stubs[sl]["bibkey"]
-                c["tradition"] = stubs[sl]["tradition"]
-                recs.append(c)
+                cand["slug"] = sl
+                cand["bibkey"] = stubs[sl]["bibkey"]
+                cand["tradition"] = stubs[sl]["tradition"]
+                recs.append(cand)
         print(f"retrying {len(recs)} of {len(stubs)} stubs")
     elif args.from_queue:
         recs = from_queue(c.queue, c)
